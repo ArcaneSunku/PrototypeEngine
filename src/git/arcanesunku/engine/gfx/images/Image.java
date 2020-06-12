@@ -1,5 +1,7 @@
 package git.arcanesunku.engine.gfx.images;
 
+import git.arcanesunku.engine.gfx.lights.Light;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;

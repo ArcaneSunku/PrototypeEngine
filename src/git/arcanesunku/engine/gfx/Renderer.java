@@ -23,11 +23,14 @@ public class Renderer {
     private final int[] m_LightBlock;
 
     private final int m_ClearColor;
-    private final int m_AmbientColor;
     private final int m_pixWidth, m_pixHeight;
 
     private Font m_Font;
+
     private int m_ZDepth = 0;
+    private int m_AmbientColor;
+
+    private boolean m_SunPresent;
     private boolean m_Processing;
 
     public Renderer(GameContainer gc) {
@@ -44,11 +47,20 @@ public class Renderer {
         m_ZBuffer = new int[m_Pixels.length];
         m_LightMap = new int[m_Pixels.length];
         m_LightBlock = new int[m_Pixels.length];
+
+        m_SunPresent = true;
     }
 
     public void clear() {
         Arrays.fill(m_Pixels, m_ClearColor);
         Arrays.fill(m_ZBuffer, m_ClearColor);
+
+        if(m_SunPresent) {
+            m_AmbientColor = 0xffcccccc;
+        } else {
+            m_AmbientColor = 0xff232323;
+        }
+
         Arrays.fill(m_LightMap, m_AmbientColor);
         Arrays.fill(m_LightBlock, m_AmbientColor);
     }
@@ -229,7 +241,13 @@ public class Renderer {
         for(int y = newY; y < newHeight; y++) {
             for(int x = newX; x < newWidth; x++) {
                 setPixel(x + offX, y + offY, image.getPixels()[x + y * image.getWidth()]);
-                setLightBlock(x + offX, y + offY, image.getLightBlock());
+                    int alpha = (image.getPixels()[x + y * image.getWidth()] >> 24) & 0xff;
+
+                    if(alpha == 0) {
+                        setLightBlock(x + offX, y + offY, 0);
+                    } else {
+                        setLightBlock(x + offX, y + offY, image.getLightBlock());
+                    }
             }
         }
     }
@@ -273,10 +291,10 @@ public class Renderer {
 
     private void drawLightRequest(Light l, int offX, int offY) {
         for(int i = 0; i <= l.getDiameter(); i++) {
-            drawLightLine(l, l.getRadius(), l.getRadius(), i, 0, offX, offY);
-            drawLightLine(l, l.getRadius(), l.getRadius(), i, l.getDiameter(), offX, offY);
-            drawLightLine(l, l.getRadius(), l.getRadius(), 0, i, offX, offY);
-            drawLightLine(l, l.getRadius(), l.getRadius(),l.getDiameter(), i, offX, offY);
+            drawLightLine(l, l.getRadius(), l.getRadius(), i, 0, offX, offY); // Top beam
+            drawLightLine(l, l.getRadius(), l.getRadius(), i, l.getDiameter(), offX, offY); // Bottom beam
+            drawLightLine(l, l.getRadius(), l.getRadius(), 0, i, offX, offY); // Left beam
+            drawLightLine(l, l.getRadius(), l.getRadius(),l.getDiameter(), i, offX, offY); // Right beam
         }
     }
 
@@ -302,12 +320,19 @@ public class Renderer {
             if(screenX < 0 || screenX >= m_pixWidth || screenY < 0 || screenY >= m_pixHeight)
                 return;
 
-            if(m_LightBlock[screenX + screenY * m_pixWidth] == Light.FULL)
-                return;
+            // Sun should be like a 'universal' lighting of sorts.
+            if(l.isSun()) {
+                continue;
+            } else {
+
+                // If our light line hits a 'solid' pixel, it stops
+                if (m_LightBlock[screenX + screenY * m_pixWidth] == Light.FULL)
+                    return;
+            }
 
             setLightMap(screenX, screenY, lightColor);
 
-            // If our light line hits a 'solid' pixel, it stops
+            // Literally no need to re-do math for lines that are exactly the same, so we dont
             if(x0 == x1 && y0 == y1)
                 break;
 
@@ -324,6 +349,14 @@ public class Renderer {
                 y0 += sY;
             }
         }
+    }
+
+    public void setSunPresent(boolean sunPresent) {
+        m_SunPresent = sunPresent;
+    }
+
+    public boolean isSunPresent() {
+        return m_SunPresent;
     }
 
     public void setZDepth(int zDepth) {

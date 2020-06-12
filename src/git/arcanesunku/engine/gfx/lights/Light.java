@@ -7,6 +7,7 @@ public class Light {
 
     private final int[] m_LightMap;
     private final int m_Radius, m_Diameter, m_Color;
+    private boolean m_Sun;
 
     public Light(int radius, int color) {
         m_Radius = radius;
@@ -27,6 +28,16 @@ public class Light {
                 }
             }
         }
+
+        m_Sun = false;
+    }
+
+    public void useAsSun(boolean useAsSun) {
+        m_Sun = true;
+    }
+
+    public boolean isSun() {
+        return m_Sun;
     }
 
     public int[] getLightMap() {

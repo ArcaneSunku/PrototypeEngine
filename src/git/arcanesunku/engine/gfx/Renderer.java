@@ -23,17 +23,20 @@ public class Renderer {
     private final int[] m_LightBlock;
 
     private final int m_ClearColor;
-    private final int m_AmbientColor;
     private final int m_pixWidth, m_pixHeight;
 
     private Font m_Font;
-    private int m_ZDepth = 0;
+
+    private int m_ZDepth;
+    private int m_AmbientColor;
+
     private boolean m_Processing;
 
     public Renderer(GameContainer gc) {
         m_ImageRequests = new ArrayList<>();
         m_LightRequests = new ArrayList<>();
 
+        m_ZDepth = 0;
         m_ClearColor = 0xff000000;
         m_AmbientColor = 0xff232323;
 
@@ -49,6 +52,7 @@ public class Renderer {
     public void clear() {
         Arrays.fill(m_Pixels, m_ClearColor);
         Arrays.fill(m_ZBuffer, m_ClearColor);
+
         Arrays.fill(m_LightMap, m_AmbientColor);
         Arrays.fill(m_LightBlock, m_AmbientColor);
     }
@@ -229,7 +233,17 @@ public class Renderer {
         for(int y = newY; y < newHeight; y++) {
             for(int x = newX; x < newWidth; x++) {
                 setPixel(x + offX, y + offY, image.getPixels()[x + y * image.getWidth()]);
-                setLightBlock(x + offX, y + offY, image.getLightBlock());
+                if(!image.hasAlpha()) {
+                    setLightBlock(x + offX, y + offY, image.getLightBlock());
+                } else {
+                    int alpha = (image.getPixels()[x + y * image.getWidth()] >> 24) & 0xff;
+
+                    if(alpha == 0) {
+                        setLightBlock(x + offX, y + offY , Light.NONE);
+                    } else {
+                        setLightBlock(x + offX, y + offY, image.getLightBlock());
+                    }
+                }
             }
         }
     }
@@ -340,6 +354,10 @@ public class Renderer {
 
     public void setFont(Font font) {
         m_Font = font;
+    }
+
+    public void setAmbientColor(int ambientColor) {
+        m_AmbientColor = ambientColor;
     }
 
 }

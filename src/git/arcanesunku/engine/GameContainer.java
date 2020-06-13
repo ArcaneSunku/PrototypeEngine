@@ -123,6 +123,8 @@ public class GameContainer implements Runnable {
         m_Height = height;
     }
 
+    public Renderer getRenderer() { return m_Renderer; }
+
     public Input getInput() {
         return m_Input;
     }

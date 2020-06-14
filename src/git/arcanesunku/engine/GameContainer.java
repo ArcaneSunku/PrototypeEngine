@@ -51,6 +51,8 @@ public class GameContainer implements Runnable {
         int frames = 0, fps = 0;
         boolean render = false;
 
+        m_Game.init(this);
+
         while (m_Running) {
             if(m_Window.hasClosed())
                 stop();
@@ -89,6 +91,8 @@ public class GameContainer implements Runnable {
                     Thread.sleep(1);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                } finally {
+                    m_Game.render(this, m_Renderer);
                 }
             }
         }
